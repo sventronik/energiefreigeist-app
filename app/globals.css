@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --accent: #00d4ff;
+  --gold: #f5a623;
+}
+
+body {
+  background: #0a0f1e;
+  color: #ffffff;
+}
+
+.card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 32px rgba(0,212,255,0.15);
+}
+
+/* Chat widget */
+.chat-bubble-user {
+  background: #00d4ff22;
+  border: 1px solid #00d4ff44;
+}
+.chat-bubble-ai {
+  background: #ffffff0d;
+  border: 1px solid #ffffff1a;
+}
