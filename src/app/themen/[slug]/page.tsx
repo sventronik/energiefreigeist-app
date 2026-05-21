@@ -1,42 +1,73 @@
-import { themen } from '@/lib/themen'
+import { TOPICS, getTopicBySlug } from '@/lib/topics'
+import Header from '@/components/Header'
+import ChatWidget from '@/components/ChatWidget'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
-export async function generateStaticParams() {
-  return themen.map(t => ({ slug: t.slug }))
+export function generateStaticParams() {
+  return TOPICS.map(t => ({ slug: t.slug }))
 }
 
-export default function ThemaPage({ params }: { params: { slug: string } }) {
-  const thema = themen.find(t => t.slug === params.slug)
-  if (!thema) notFound()
+export default function TopicPage({ params }: { params: { slug: string } }) {
+  const topic = getTopicBySlug(params.slug)
+  if (!topic) notFound()
+
+  const levelLabels: Record<number, string> = {
+    0: 'Frei zugänglich',
+    1: 'Level 1 — Flex-Kunde',
+    2: 'Level 2 — Fix-Kunde',
+    3: 'Inner Circle',
+  }
 
   return (
-    <main className="max-w-3xl mx-auto px-4 py-12">
-      <Link href="/themen" className="text-brand-600 hover:underline text-sm mb-6 inline-block">← Alle Themen</Link>
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-        <div className="text-5xl mb-4">{thema.emoji}</div>
-        <div className="flex items-center gap-3 mb-4">
-          <span className="text-xs text-brand-600 bg-brand-50 px-3 py-1 rounded-full">{thema.kategorie}</span>
-          {thema.level > 0 && (
-            <span className="text-xs text-amber-600 bg-amber-50 px-3 py-1 rounded-full">🔒 Level {thema.level}+</span>
+    <main className="min-h-screen pt-20">
+      <Header />
+      <div className="max-w-3xl mx-auto px-4 py-12">
+        <Link href="/themen" className="text-sm text-slate-500 hover:text-brand-500 transition-colors mb-8 inline-flex items-center gap-1">
+          ← Zurück zu allen Themen
+        </Link>
+
+        <div className="card p-8 mt-4">
+          <div className="flex items-start justify-between mb-6">
+            <span className="text-5xl">{topic.icon}</span>
+            <span className="text-xs text-slate-500 bg-white/5 px-3 py-1 rounded-full">
+              {levelLabels[topic.level_required]}
+            </span>
+          </div>
+
+          <div className="text-sm text-brand-500 font-semibold mb-2 uppercase tracking-wider">{topic.category}</div>
+          <h1 className="text-3xl font-bold mb-4">{topic.title}</h1>
+          <p className="text-lg text-slate-300 mb-8 leading-relaxed">{topic.teaser}</p>
+
+          {topic.level_required === 0 ? (
+            <div className="space-y-4">
+              <div className="bg-brand-500/10 border border-brand-500/20 rounded-xl p-6">
+                <h3 className="font-semibold text-brand-500 mb-2">Was dich hier erwartet</h3>
+                <p className="text-slate-400 text-sm leading-relaxed">
+                  Detaillierte Informationen zu diesem Thema, Praxis-Beweise, Video-Erklärungen
+                  und alles was du brauchst um eine fundierte Entscheidung zu treffen.
+                  Melde dich an oder starte mit einem Einstiegsprodukt.
+                </p>
+              </div>
+              <Link href="/einstieg" className="block w-full text-center bg-brand-500 hover:bg-brand-600 text-white font-semibold py-3 rounded-xl transition-colors">
+                Kostenlos registrieren / Einsteigen
+              </Link>
+            </div>
+          ) : (
+            <div className="bg-white/5 border border-white/10 rounded-xl p-6 text-center">
+              <div className="text-3xl mb-3">🔒</div>
+              <h3 className="font-semibold mb-2">Freischaltung erforderlich</h3>
+              <p className="text-slate-400 text-sm mb-4">
+                Dieser Bereich ist für {levelLabels[topic.level_required]}-Mitglieder.
+              </p>
+              <Link href="/einstieg" className="bg-brand-500 hover:bg-brand-600 text-white font-semibold px-6 py-2 rounded-lg transition-colors inline-block">
+                Jetzt freischalten
+              </Link>
+            </div>
           )}
         </div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">{thema.titel}</h1>
-        <p className="text-gray-600 text-lg leading-relaxed mb-8">{thema.teaser}</p>
-
-        {thema.level === 0 ? (
-          <div className="bg-brand-50 rounded-xl p-6 border border-brand-100">
-            <p className="text-brand-800 font-medium mb-2">✅ Freier Bereich</p>
-            <p className="text-brand-700 text-sm">Dieses Thema ist für alle zugänglich. Weitere Details findest du nach dem Einloggen.</p>
-          </div>
-        ) : (
-          <div className="bg-amber-50 rounded-xl p-6 border border-amber-100">
-            <p className="text-amber-800 font-medium mb-2">🔒 Level {thema.level} erforderlich</p>
-            <p className="text-amber-700 text-sm mb-4">Für tiefere Einblicke zu diesem Thema benötigst du Level {thema.level}. Steige jetzt ein.</p>
-            <Link href="/login" className="bg-brand-600 text-white text-sm font-semibold px-5 py-2 rounded-lg hover:bg-brand-700 transition inline-block">Einloggen / Einsteigen</Link>
-          </div>
-        )}
       </div>
+      <ChatWidget />
     </main>
   )
 }

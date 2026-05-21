@@ -1,15 +1,12 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
 
-interface Message {
-  role: 'user' | 'assistant'
-  content: string
-}
+type Message = { role: 'user' | 'assistant'; content: string }
 
 export default function ChatWidget() {
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: 'Hallo! Ich bin dein Energiefreigeist-Assistent. Was möchtest du über Strömungsoptimierung, Wasserstoff oder das Energy Sovereignty System™ wissen?' }
+    { role: 'assistant', content: 'Hallo! Ich bin dein Energiefreigeist-Assistent. Was möchtest du über Strömungsoptimierung, Wasserstoff oder das Partnerprogramm wissen? 🌿' }
   ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -17,81 +14,84 @@ export default function ChatWidget() {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+  }, [messages, loading])
 
   const send = async () => {
     if (!input.trim() || loading) return
-    const userMsg = input.trim()
+    const userMsg: Message = { role: 'user', content: input.trim() }
+    setMessages(prev => [...prev, userMsg])
     setInput('')
-    setMessages(prev => [...prev, { role: 'user', content: userMsg }])
     setLoading(true)
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMsg, history: messages })
+        body: JSON.stringify({ messages: [...messages, userMsg] })
       })
       const data = await res.json()
-      setMessages(prev => [...prev, { role: 'assistant', content: data.reply || 'Ich kann das gerade nicht beantworten. Bitte versuche es später nochmal.' }])
+      setMessages(prev => [...prev, { role: 'assistant', content: data.reply }])
     } catch {
-      setMessages(prev => [...prev, { role: 'assistant', content: 'Verbindungsfehler — bitte versuche es nochmal.' }])
+      setMessages(prev => [...prev, { role: 'assistant', content: 'Kurze Verbindungspause — bitte nochmal versuchen.' }])
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   return (
     <>
-      {/* Floating Button */}
+      {/* FAB */}
       <button
-        onClick={() => setOpen(!open)}
-        className="fixed bottom-6 right-6 bg-brand-600 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center text-2xl hover:bg-brand-700 transition z-50"
-        aria-label="Chat öffnen"
+        onClick={() => setOpen(o => !o)}
+        className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-brand-500 hover:bg-brand-600 rounded-full shadow-lg flex items-center justify-center text-2xl transition-transform hover:scale-110"
+        aria-label="Assistent öffnen"
       >
-        {open ? '✕' : '⚡'}
+        {open ? '✕' : '💬'}
       </button>
 
-      {/* Chat Panel */}
+      {/* Chat panel */}
       {open && (
-        <div className="fixed bottom-24 right-6 w-80 bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col z-50" style={{height: '420px'}}>
+        <div className="fixed bottom-24 right-6 z-50 w-80 sm:w-96 bg-dark-800 border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden" style={{ height: '480px' }}>
           {/* Header */}
-          <div className="bg-brand-700 text-white px-4 py-3 rounded-t-2xl">
-            <div className="font-semibold">⚡ Energiefreigeist Assistent</div>
-            <div className="text-xs text-brand-200">Frag mich alles über das Energie-Universum</div>
+          <div className="p-4 border-b border-white/10 flex items-center gap-3">
+            <span className="text-xl">⚡</span>
+            <div>
+              <div className="font-semibold text-sm">Energiefreigeist Assistent</div>
+              <div className="text-xs text-slate-500">Frag mich alles über Svens Systeme</div>
+            </div>
           </div>
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {messages.map((m, i) => (
-              <div key={i} className={m.role === 'user' ? 'flex justify-end' : 'flex justify-start'}>
-                <div className={m.role === 'user' ? 'chat-bubble-user text-sm' : 'chat-bubble-ai text-sm'}>
-                  {m.content}
-                </div>
+              <div key={i} className={`p-3 text-sm leading-relaxed ${
+                m.role === 'user' ? 'chat-bubble-user ml-8 text-right' : 'chat-bubble-ai mr-8'
+              }`}>
+                {m.content}
               </div>
             ))}
             {loading && (
-              <div className="flex justify-start">
-                <div className="chat-bubble-ai text-sm text-gray-400">Denke nach...</div>
+              <div className="chat-bubble-ai mr-8 p-3 text-sm text-slate-400">
+                <span className="animate-pulse">Denkt nach…</span>
               </div>
             )}
             <div ref={bottomRef} />
           </div>
 
           {/* Input */}
-          <div className="p-3 border-t border-gray-100 flex gap-2">
+          <div className="p-3 border-t border-white/10 flex gap-2">
             <input
-              type="text"
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && send()}
-              placeholder="Deine Frage..."
-              className="flex-1 text-sm border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500"
+              placeholder="Deine Frage…"
+              className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-brand-500/50 placeholder-slate-600"
             />
             <button
               onClick={send}
-              disabled={loading}
-              className="bg-brand-600 text-white px-3 py-2 rounded-xl text-sm hover:bg-brand-700 disabled:opacity-50 transition"
+              disabled={loading || !input.trim()}
+              className="bg-brand-500 hover:bg-brand-600 disabled:opacity-40 text-white px-3 py-2 rounded-lg text-sm font-semibold transition-colors"
             >
-              ➤
+              →
             </button>
           </div>
         </div>
